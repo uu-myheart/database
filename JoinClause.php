@@ -1,6 +1,6 @@
 <?php
 
-namespace Curia\Framework\Database;
+namespace Curia\Database;
 
 use Closure;
 

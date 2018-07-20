@@ -1,6 +1,6 @@
 <?php
 
-namespace Curia\Framework\Database;
+namespace Curia\Database;
 
 use Curia\Collect\Arr;
 
@@ -50,7 +50,7 @@ Class Grammar
     /**
      * Compile a select query into SQL.
      *
-     * @param  \Curia\Framework\Database\Builder $query
+     * @param  \Curia\Database\Builder $query
      * @return string
      */
     public static function compileSelect(QueryBuilder $query)
@@ -116,7 +116,7 @@ Class Grammar
     /**
      * Compile the "select *" portion of the query.
      *
-     * @param  \Curia\Framework\Database\Builder $query
+     * @param  \Curia\Database\Builder $query
      * @param  array  $columns
      * @return string|null
      */
@@ -227,7 +227,7 @@ Class Grammar
     /**
      * Compile the "from" portion of the query.
      *
-     * @param  \Curia\Framework\Database\Builder $query
+     * @param  \Curia\Database\Builder $query
      * @param  string  $table
      * @return string
      */
