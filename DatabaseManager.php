@@ -5,6 +5,13 @@ namespace Curia\Database;
 class DatabaseManager
 {
     /**
+     * The current globally used instance.
+     *
+     * @var object
+     */
+    public static $instance;
+
+    /**
      * The application instance.
      *
      * @var \Illuminate\Foundation\Application
@@ -24,9 +31,11 @@ class DatabaseManager
      * @param \Curia\Framework\Application $app
      * @return void;
      */
-    public function __construct($app)
+    public function __construct($app = null)
     {
         $this->app = $app;
+
+        static::$instance = $this;
     }
     
     public function connection($name = null)
@@ -35,7 +44,7 @@ class DatabaseManager
         
         // 如果没有连接就新建立一个连接
         if (! isset($this->connections[$name])) {
-            $this->connections[$name] = $this->createConnection($name);
+            $this->addConnection([], $name);
         }
 
         return $this->connections[$name];
@@ -43,14 +52,20 @@ class DatabaseManager
 
     protected function getDefaultConnectionName()
     {
-        return $this->app->config('database.default');
+        if (isset($this->app)) {
+            return $this->app->config('database.default');
+        }
+
+        return 'default';
     }
 
-    protected function createConnection($name)
+    public function addConnection($config, $name = 'default')
     {
-        $config = $this->app->config('database.connections')[$name];
+        if (isset($this->app)) {
+            $config = $this->app->config('database.connections')[$name];
+        }
 
-        return new Connection($config);
+        $this->connections[$name] = new Connection($config);
     }
 
     public function __call($method, $parameters)

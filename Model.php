@@ -1,6 +1,6 @@
 <?php
 
-namespace Curia\Database\Eloquent;
+namespace Curia\Database;
 
 use ReflectionClass;
 
@@ -11,7 +11,14 @@ abstract class Model
      *
      * @var string
      */
-    protected $connection;
+    protected $connection = 'default';
+
+    /**
+     * The query builder instance.
+     *
+     * @var \Curia\Database\QueryBuilder
+     */
+    protected $query;
 
     /**
      * The table associated with the model.
@@ -75,11 +82,11 @@ abstract class Model
     /**
      * Get a new query builder for the model's table.
      *
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return \Curia\Database\QueryBuilder
      */
     public function query()
     {
-        return new Builder(app('db')->connection());
+        return new QueryBuilder(DatabaseManager::$instance->connection($this->connection));
     }
 
     /**

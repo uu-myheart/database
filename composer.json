@@ -10,7 +10,9 @@
         }
     ],
     "require": {
-        "php": "^7.1.3"
+        "php": "^7.1.3",
+        "curia/container": "dev-dev",
+        "curia/collect": "dev-dev"
     },
     "autoload": {
         "psr-4": {
