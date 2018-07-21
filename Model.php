@@ -2,7 +2,11 @@
 
 namespace Curia\Database;
 
+use stdClass;
 use ReflectionClass;
+use Curia\Collect\Str;
+use Curia\Collect\Collection;
+
 
 abstract class Model
 {
@@ -11,7 +15,14 @@ abstract class Model
      *
      * @var string
      */
-    protected $connection = 'default';
+    protected $connection;
+
+    /**
+     * The connection manager instance.
+     *
+     * @var \Curia\Database\DatabaseManager
+     */
+    protected static $manager;
 
     /**
      * The query builder instance.
@@ -46,7 +57,7 @@ abstract class Model
      *
      * @var array
      */
-    protected $original = [];
+    // protected $original = [];
 
     /**
      * The changed model attributes.
@@ -56,27 +67,130 @@ abstract class Model
     protected $changes = [];
 
     /**
+     * Indicates if the model exists.
+     *
+     * @var bool
+     */
+    protected $exists = false;
+
+    /**
      * Create a new Eloquent model instance.
      *
      * @param  array  $attributes
      * @return void
      */
-    public function __construct(array $attributes = [])
+    public function __construct()
     {
         $this->setDefaultTableName();
-
-        // $this->fill($attributes);
     }
 
     protected function setDefaultTableName()
     {
         if (! isset($this->table)) {
-            $reflection = new ReflectionClass($this);
-
-            $table = str_plural(strtolower($reflection->getShortName()));    
-
-            $this->table = $table;
+            $this->table = str_replace(
+                '\\', '', Str::snake(Str::plural(class_basename($this)))
+            );
         }
+    }
+
+    public static function setupManager(DatabaseManager $manager)
+    {
+        static::$manager = $manager;
+    }
+
+    public function save()
+    {
+        if ($this->exists) {
+            $result = $this->query()
+                    ->where($this->primaryKey, $this->attributes[$this->primaryKey])
+                    ->update($this->changes);
+
+            if ($result) {
+                $this->changes = [];
+            }
+
+            return $result;
+        }
+
+        return $this->query()->insertGetId($this->attributes);
+    }
+
+    public static function create(array $attributes)
+    {
+        $model = static::make($attributes);
+
+        $id = $model->save();
+
+        $model = static::where($model->getPrimaryKey(), $id)->first();
+
+        return $model;
+    }
+
+    public function getPrimaryKey()
+    {
+        return $this->primaryKey;
+    }
+
+    public function fill(array $attributes)
+    {
+        foreach ($attributes as $key => $value) {
+            $this->setAttribute($key, $value);
+        }
+    }
+
+    public static function make(array $attributes)
+    {
+        return tap(new static, function ($model) use ($attributes) {
+            $model->fill($attributes);
+        });
+    }
+
+    /**
+     * Get an attribute from the model.
+     *
+     * @param  string  $key
+     * @return mixed
+     */
+    public function getAttribute($key)
+    {
+        if (! $key || ! array_key_exists($key, $this->attributes)) {
+            return;
+        }
+
+        return $this->attributes[$key];
+    }
+
+    /**
+     * Set a given attribute on the model.
+     *
+     * @param  string  $key
+     * @param  mixed  $value
+     * @return $this
+     */
+    public function setAttribute($key, $value)
+    {
+        $this->attributes[$key] = $value;
+        $this->changes[$key] = $value;
+
+        return $this;
+    }
+
+    /**
+     * Create a new instance of the given model.
+     *
+     * @param  array  $attributes
+     * @param  bool  $exists
+     * @return static
+     */
+    public function newInstance($attributes = [], $exists = false)
+    {
+        $model = new static;
+
+        $model->attributes = $attributes;
+
+        $model->exists = $exists;
+
+        return $model;
     }
 
     /**
@@ -84,9 +198,35 @@ abstract class Model
      *
      * @return \Curia\Database\QueryBuilder
      */
-    public function query()
+    protected function query()
     {
-        return new QueryBuilder(DatabaseManager::$instance->connection($this->connection));
+        return static::$manager
+                    ->connection($this->connection)
+                    ->table($this->table)
+                    ->setModel($this);
+    }
+
+    /**
+     * Dynamically retrieve attributes on the model.
+     *
+     * @param  string  $key
+     * @return mixed
+     */
+    public function __get($key)
+    {
+        return $this->getAttribute($key);
+    }
+
+    /**
+     * Dynamically set attributes on the model.
+     *
+     * @param  string  $key
+     * @param  mixed  $value
+     * @return void
+     */
+    public function __set($key, $value)
+    {
+        $this->setAttribute($key, $value);
     }
 
     /**

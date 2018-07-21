@@ -5,6 +5,7 @@ namespace Curia\Database;
 use Closure;
 use Curia\Collect\Arr;
 use Curia\Collect\Str;
+use Curia\Collect\Collection;
 
 Class QueryBuilder
 {
@@ -14,6 +15,17 @@ Class QueryBuilder
     * @var \Illuminate\Database\ConnectionInterface
     */
     public $connection;
+
+    protected $fetchClass = false;
+
+    protected $className;
+
+    /**
+     * The model being queried.
+     *
+     * @var \Curia\Database\Model
+     */
+    protected $model;
 
     /**
      * The database query grammar instance.
@@ -272,11 +284,22 @@ Class QueryBuilder
             $this->columns = $columns;
         }
 
-        $results = $this->runSelect();
+        $results = collect($this->runSelect());
 
         $this->columns = $original;
 
-        return collect($results);
+        if (! $this->fetchClass) {
+            return $results;
+        }
+
+        return $this->resultToModel($results);
+    }
+
+    protected function resultToModel(Collection $collection)
+    {
+        return $collection->map(function ($item) {
+            return $this->model->newInstance((array) $item, $exists = true);
+        });
     }
 
     /**
@@ -289,6 +312,22 @@ Class QueryBuilder
         return $this->connection->select(
             $this->toSql(), $this->getBindings()
         );
+    }
+
+    public function setModel($model)
+    {
+        $this->model = $model;
+
+        return $this->fetchClass(get_class($model));
+    }
+
+    protected function fetchClass($className)
+    {
+        $this->fetchClass = true;
+
+        $this->className = $className;
+
+        return $this;
     }
 
     /**
