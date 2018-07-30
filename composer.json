@@ -10,7 +10,9 @@
         }
     ],
     "require": {
-        "php": "^7.1.3"
+        "php": "^7.1.3",
+        "curia/container": "^1.0.0 || <1.0",
+        "curia/collect": "^1.0.0 || <1.0"
     },
     "autoload": {
         "psr-4": {

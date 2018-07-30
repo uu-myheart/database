@@ -20,11 +20,22 @@ Class Connection
      */
     protected $fetchMode = PDO::FETCH_OBJ;
 
+    /**
+     * Connection constructor.
+     * @param array $config
+     */
 	public function __construct(array $config)
 	{
 		$this->pdo = (new MysqlConnector)->connect($config);	
 	}
 
+    /**
+     * 执行select语句
+     *
+     * @param $query
+     * @param array $bindings
+     * @return \stdClass|[]
+     */
 	public function select($query, $bindings = [])
 	{
 		$statement = tap($this->pdo->prepare($query))->setFetchMode($this->fetchMode);
@@ -87,6 +98,13 @@ Class Connection
         return $this->statement($query, $bindings);
     }
 
+    /**
+     * Execute an SQL statement and return the boolean result.
+     *
+     * @param  string  $query
+     * @param  array   $bindings
+     * @return bool
+     */
     public function statement($query, $bindings)
     {
     	$statement = $this->pdo->prepare($query);
@@ -114,6 +132,15 @@ Class Connection
         }
     }
 
+    /**
+     * Execute a Closure within a transaction.
+     *
+     * @param  \Closure  $callback
+     * @param  int  $attempts
+     * @return mixed
+     *
+     * @throws \Exception|\Throwable
+     */
     public function transaction(Callable $callback)
     {
         try {
@@ -129,16 +156,33 @@ Class Connection
         }
     }
 
+    /**
+     * Start a new database transaction.
+     *
+     * @return void
+     * @throws \Exception
+     */
     public function beginTransaction()
     {
         $this->pdo->beginTransaction();
     }
 
+    /**
+     * Commit the active database transaction.
+     *
+     * @return void
+     */
     public function commit()
     {
         $this->pdo->commit();
     }
 
+    /**
+     * Rollback the active database transaction.
+     *
+     * @param  int|null  $toLevel
+     * @return void
+     */
     public function rollback()
     {
         $this->pdo->rollback();
