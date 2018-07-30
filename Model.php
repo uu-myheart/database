@@ -7,7 +7,6 @@ use ReflectionClass;
 use Curia\Collect\Str;
 use Curia\Collect\Collection;
 
-
 abstract class Model
 {
     /**

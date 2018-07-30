@@ -47,11 +47,22 @@ class DatabaseManager
         }
     }
 
+    /**
+     * 启动Model
+     *
+     * @return void
+     */
     public function bootModel()
     {
         Model::setupManager($this);
     }
-    
+
+    /**
+     * Get a database connection instance.
+     *
+     * @param  string  $name
+     * @return \Curia\Database\Connection
+     */
     public function connection($name = null)
     {
         $name = $name ?? $this->getDefaultConnectionName();
@@ -64,6 +75,11 @@ class DatabaseManager
         return $this->connections[$name];
     }
 
+    /**
+     * u
+     * 
+     * @return mixed
+     */
     protected function getDefaultConnectionName()
     {
         return $this->app['config']['database.default'];
